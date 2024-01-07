@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from djoser.views import UserViewSet
 
 from .filters import RecipeFilter, IngredientFilter
+
 from .pagination import CustomPagination
 from .serializers import (
     CreateRecipeSerializer, RecipeSerializer, CartSerializer,
@@ -184,9 +185,7 @@ class ShoppingCartView(APIView):
 
     def delete(self, request, id_):
         recipe = get_object_or_404(Recipe, id=id_)
-        shopping_cart = Cart.objects.filter(
-           user=request.user, recipe=recipe
-        )
+        shopping_cart = Cart.objects.filter(user=request.user, recipe=recipe)
         if shopping_cart.exists():
             shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

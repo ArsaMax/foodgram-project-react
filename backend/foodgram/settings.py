@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 
@@ -117,7 +118,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
-#DJOSER = {
+# DJOSER = {
 #    'USER_AUTHENTICATION_RULE': 'djoser.auth.TokenAuthentication',
 #    'LOGIN_FIELD': 'email',
 #    'SERIALIZERS': {
@@ -128,4 +129,4 @@ REST_FRAMEWORK = {
 #    'PERMISSIONS': {
 #        'user_list': ('rest_framework.permissions.AllowAny',),
 #    }
-#}
+# }
