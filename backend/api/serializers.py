@@ -178,9 +178,9 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ingredients_ids = set()
         for ingredient in ingredients:
             if ingredient['id'] in ingredients_ids:
-                raise serializers.ValidationError({
-                   'ingredient': 'Ингредиенты должны быть уникальными!'
-                })
+                raise serializers.ValidationError(
+                    {'ingredient': 'Ингредиенты должны быть уникальными!'}
+                )
             ingredients_ids.add(ingredient['id'])
         return data
 
