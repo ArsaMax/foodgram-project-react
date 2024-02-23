@@ -1,34 +1,32 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 SECRET_KEY = os.getenv('SECRET_KEY', default='token')
 
-DEBUG = os.environ.get('DEBUG', default=False)
+DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1, localhost'
                           ).split(',')
 
+
 INSTALLED_APPS = [
-    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api.apps.ApiConfig',
-    'recipes.apps.RecipesConfig',
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
     'django_filters',
+    'import_export',
+    'users.apps.UsersConfig',
+    'api.apps.ApiConfig',
+    'recipes.apps.RecipesConfig',
 ]
 
 MIDDLEWARE = [
@@ -62,24 +60,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+        'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
-            'NAME': os.getenv('DB_NAME', default='postgres'),
-            'USER': os.getenv('POSTGRES_USER', default='postgres'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
-            'HOST': os.getenv('DB_HOST', default='db'),
-            'PORT': os.getenv('DB_PORT', default='5432')
-        }
-    }
+}
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -106,15 +97,16 @@ USE_L10N = True
 
 USE_TZ = True
 
+
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 AUTH_USER_MODEL = 'users.User'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -124,18 +116,24 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 }
 
-# DJOSER = {
-#    'USER_AUTHENTICATION_RULE': 'djoser.auth.TokenAuthentication',
-#    'LOGIN_FIELD': 'email',
-#    'SERIALIZERS': {
-#        'user_create': 'api.serializers.CustomUserCreateSerializer',
-#        'user': 'api.serializers.UserReadSerializer',
-#        'current_user': 'api.serializers.UserReadSerializer',
-#    },
-#    'PERMISSIONS': {
-#        'user_list': ('rest_framework.permissions.AllowAny',),
-#    }
-# }
+
+DJOSER = {
+    'SERIALIZERS': {
+        'user': 'api.serializers.CustomUserSerializer',
+        'current_user': 'api.serializers.CustomUserSerializer',
+    },
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    'SEND_ACTIVATION_EMAIL': False,
+    'PERMISSIONS': {
+        'user_list': [
+            'rest_framework.permissions.AllowAny'
+        ],
+        'user': [
+            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
+        ]
+    },
+}
