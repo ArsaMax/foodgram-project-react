@@ -14,6 +14,7 @@ MIN_INGREDIENT_AMOUNT = 1
 
 class Base64ImageField(serializers.ImageField):
     """Кастомный тип поля изображений."""
+
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             _format, img_str = data.split(';base64,')
@@ -26,6 +27,7 @@ class Base64ImageField(serializers.ImageField):
 
 class CustomUserSerializer(UserSerializer):
     """Селиализатор модели User"""
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -48,21 +50,24 @@ class CustomUserSerializer(UserSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Таг."""
+    """Сериализатор для тегов."""
+
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели ингредиентов."""
+    """Сериализатор для ингредиентов."""
+
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для ингредиентов в рецепте, выходные данные."""
+    """Сериализатор промежуточной модели Рецепт-Ингредиент."""
+
     id = serializers.IntegerField(
         source='ingredient.id'
     )
@@ -84,7 +89,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели ингредиентов в рецепте (основной)."""
+    """Сериализатор: ингредиенты в рецепте."""
+
     id = serializers.IntegerField(write_only=True)
     amount = serializers.IntegerField(write_only=True)
 
@@ -94,7 +100,8 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Recip (GET)."""
+    """Сериализатор рецептов для запроса GET."""
+
     tags = TagSerializer(many=True)
     ingredients = RecipeIngredientSerializer(
         read_only=True,
@@ -129,7 +136,8 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Recip (основной)."""
+    """Сериализатор рецептов для всех остальных запросов помимо GET."""
+
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True
@@ -155,7 +163,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate_ingredients(self, value):
-        """Валидация поля ingredients."""
+        """Валидация ингредиентов."""
         if not value:
             raise serializers.ValidationError(
                 'Нужно добавить хотя бы один ингредиент.'
@@ -163,7 +171,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in value:
             if not int(ingredient.get('amount')) >= MIN_INGREDIENT_AMOUNT:
                 raise serializers.ValidationError(
-                    'Количество ингредиента должно быть больше 0.'
+                    'Количество ингредиентов не должно быть меньше 1.'
                 )
             if not Ingredient.objects.filter(
                     pk=ingredient.get('id')
@@ -175,24 +183,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         id_list = [ingredient.get('id') for ingredient in value]
         if len(id_list) != len(set(id_list)):
             raise serializers.ValidationError(
-                'Дублирование ингредиента.'
+                'Задвоение ингредиента.'
             )
         return value
 
     def validate_tags(self, value):
-        """Валидация поля tags."""
+        """Валидация тегов."""
         if not value:
             raise serializers.ValidationError(
-                'Нужно добавить хотя бы один тег.'
+                'Нужно добавить больше тегов.'
             )
         if len(value) != len(set(value)):
             raise serializers.ValidationError(
-                'Дублирование тега.'
+                'Задвоение тега.'
             )
         return value
 
     def to_representation(self, instance):
-        """Переопределение сериализатора для выходных данных."""
+        """Переопределение сериализатора для вывода данных."""
         return RecipeGetSerializer(
             instance, context=self.context
         ).data
@@ -222,11 +230,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def update(self, recipe, validated_data):
-        """Обновление рецепта"""
+        """Редактирование рецепта."""
         if (not validated_data.get('ingredients')
                 or not validated_data.get('tags')):
             raise serializers.ValidationError(
-                'Не все обязательные поля заполнены.'
+                'Не все поля заполнены.'
             )
         recipe.ingredients.clear()
         ingredients = validated_data.pop('ingredients')
@@ -240,7 +248,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipesShortSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Recipe в подписках/корзине."""
+    """Сериализатор рецептов в подписках и корзине."""
+
     class Meta:
         model = Recipe
         fields = (
@@ -253,6 +262,7 @@ class RecipesShortSerializer(serializers.ModelSerializer):
 
 class SubscriptionsSerializer(CustomUserSerializer):
     """Сериализатор для подписок."""
+
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -270,11 +280,11 @@ class SubscriptionsSerializer(CustomUserSerializer):
         )
 
     def get_recipes_count(self, obj):
-        """Подсчет количества рецептов у пользователя."""
+        """Расчет количества рецептов пользователя."""
         return obj.recipes.count()
 
     def get_recipes(self, obj):
-        """Ограничение количества выводимых рецептов, в подписках."""
+        """Ограничение количества рецептов в подписках."""
         queryset = Recipe.objects.filter(author=obj)
         if recipes_limit := self.context['request'].GET.get(
                 'recipes_limit'

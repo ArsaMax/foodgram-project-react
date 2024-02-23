@@ -4,7 +4,8 @@ from recipes.models import Ingredient, Recipe, Tag
 
 
 class IngredientSearchFilter(rest_framework.FilterSet):
-    """Фильтрация для модели ингредиентов."""
+    """Фильтр для ингредиентов."""
+
     name = rest_framework.CharFilter(lookup_expr='istartswith')
 
     class Meta:
@@ -13,7 +14,8 @@ class IngredientSearchFilter(rest_framework.FilterSet):
 
 
 class RecipeSearchFilter(rest_framework.FilterSet):
-    """Фильтрация для модели рецептов."""
+    """Фильтр для рецептов."""
+
     is_favorited = rest_framework.BooleanFilter()
     is_in_shopping_cart = rest_framework.BooleanFilter()
     author = rest_framework.NumberFilter(

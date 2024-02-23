@@ -28,8 +28,6 @@ from .pagination import CustomPagination
 
 
 class CustomUserViewSet(UserViewSet):
-    """Вьюсет для модели пользователей.
-    С реализованным функционалом подписок."""
     pagination_class = CustomPagination
 
     @action(
@@ -38,7 +36,7 @@ class CustomUserViewSet(UserViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
-        """Вывод информации о текущем пользователи."""
+        """Вывод информации о текущем пользователе."""
         user = get_object_or_404(
             User,
             email=request.user.email
@@ -79,7 +77,7 @@ class CustomUserViewSet(UserViewSet):
         )
         if request.user == user:
             return Response(
-                'Вы пытаетесь подписаться на себя.',
+                'Нельзя подписаться на себя.',
                 status=status.HTTP_400_BAD_REQUEST
             )
         if Follow.objects.filter(
@@ -125,14 +123,16 @@ class CustomUserViewSet(UserViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    """Вьюсет для модели Таг."""
+    """Вьюсет для тегов."""
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    """Вьюсет для модели ингредиентов."""
+    """Вьюсет для ингредиентов."""
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
@@ -143,9 +143,11 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Вьюсет для модели Recip.
-    С реализованным функционалом избранных рецептом
-    и скачивание списка покупок."""
+    """
+    Вьюсет для рецептов с реализованным функционалом избранных рецептом и
+    скачивания списка покупок.
+    """
+
     queryset = Recipe.objects.all().select_related(
         'author'
     ).prefetch_related(
@@ -181,7 +183,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create_object(
             self, model, text, serializer
     ):
-        """Добавление рецепта в избранное/корзину."""
+        """Добавление рецепта в избранное или корзину."""
         if not (recipe := Recipe.objects.filter(
                 id=self.kwargs.get('pk')
         ).first()):
@@ -214,7 +216,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def delete_object(
             self, model, text
     ):
-        """Удаление рецепта из избранного/корзины."""
+        """Удаление рецепта из избранного и корзины."""
         recipe = get_object_or_404(
             Recipe,
             id=self.kwargs.get('pk')

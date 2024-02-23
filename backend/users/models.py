@@ -1,61 +1,55 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.validators import RegexValidator
 
-
-REGEX_SIGNS = RegexValidator(r'^[\w.@+-]+\Z', 'Поддерживаемые символы.')
-REGEX_ME = RegexValidator(r'[^m][^e]', 'Имя пользователя не может быть "me".')
+MAX_LENGTH = 15
 
 
 class User(AbstractUser):
-    """Модель пользователей."""
+    """Модель пользователя."""
+
     username = models.CharField(
+        'Логин',
         unique=True,
         max_length=150,
-        validators=(REGEX_SIGNS, REGEX_ME),
-        verbose_name='Никнейм пользователя',
-        help_text='Укажите никнейм пользователя'
     )
     email = models.EmailField(
+        'E-mail',
         unique=True,
         max_length=254,
-        verbose_name='E-mail пользователя',
-        help_text='Укажите e-mail пользователя'
     )
     first_name = models.CharField(
+        'Имя',
         max_length=150,
-        verbose_name='Имя пользователя',
-        help_text='Укажите имя пользователя'
     )
     last_name = models.CharField(
+        'Фамилия',
         max_length=150,
-        verbose_name='Фамилия пользователя',
-        help_text='Укажите фамилия пользователя'
     )
     REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
     USERNAME_FIELD = 'email'
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'Пользователь'
+        verbose_name = 'пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
-        return self.username
+        return self.username[:MAX_LENGTH]
 
 
 class Follow(models.Model):
-    """Модель подписок."""
+    """Подписки пользователей."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчик',
+        verbose_name='Подписчики',
         related_name='follower'
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписка',
+        verbose_name='Автор',
         related_name='following',
     )
 
@@ -66,5 +60,8 @@ class Follow(models.Model):
                 name='unique_following'
             )
         ]
-        verbose_name = 'Подписка'
+        verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user[:MAX_LENGTH]} --> {self.following[:MAX_LENGTH]}'
