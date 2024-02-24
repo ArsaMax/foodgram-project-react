@@ -26,7 +26,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class CustomUserSerializer(UserSerializer):
-    """Селиализатор модели User"""
+    """Селиализатор модели User."""
 
     is_subscribed = serializers.SerializerMethodField()
 
