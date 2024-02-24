@@ -134,14 +134,12 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd foodgram
-            sudo docker compose down -v
-            sudo docker system prune -af
             sudo docker compose -f docker-compose.yml pull
+            sudo docker compose -f docker-compose.yml down
             sudo docker compose -f docker-compose.yml up -d
             sudo docker compose -f docker-compose.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.yml exec backend python manage.py collectstatic
             sudo docker compose -f docker-compose.yml exec backend cp -r /app/static/. /static/static/
-            sudo docker compose -f docker-compose.yml exec backend python manage.py load_ingredients
 
   send_message:
     runs-on: ubuntu-latest
