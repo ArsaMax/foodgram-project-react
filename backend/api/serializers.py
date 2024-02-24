@@ -148,7 +148,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(
         read_only=True,
     )
-    image = Base64ImageField()
+    image = serializers.SerializerMethodField('get_image_url')
 
     class Meta:
         model = Recipe
@@ -161,6 +161,11 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
     def validate_ingredients(self, value):
         """Валидация ингредиентов."""
