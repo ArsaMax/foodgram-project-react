@@ -32,7 +32,7 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = CustomPagination
 
     @action(
-        ['get'],
+        ('get',),
         detail=False,
         permission_classes=(IsAuthenticated,)
     )
@@ -46,7 +46,7 @@ class CustomUserViewSet(UserViewSet):
         return Response(serializer.data)
 
     @action(
-        methods=['get'],
+        methods=('get',),
         detail=False
     )
     def subscriptions(self, request):
@@ -67,7 +67,7 @@ class CustomUserViewSet(UserViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(
-        methods=['post'],
+        methods=('post',),
         detail=True
     )
     def subscribe(self, request, **kwargs):
@@ -166,7 +166,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeSearchFilter
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_queryset(self):
         queryset = self.queryset
@@ -233,7 +233,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=['post'],
+        methods=('post',),
         detail=True
     )
     def favorite(self, request, **kwargs):
@@ -255,7 +255,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=['post'],
+        methods=('post',),
         detail=True
     )
     def shopping_cart(self, request, **kwargs):
@@ -277,7 +277,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
+        methods=('get',),
         pagination_class=IsAuthenticated
     )
     def download_shopping_cart(self, request):

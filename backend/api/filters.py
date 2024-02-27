@@ -10,7 +10,7 @@ class IngredientSearchFilter(rest_framework.FilterSet):
 
     class Meta:
         model = Ingredient
-        fields = ['name']
+        fields = ('name',)
 
 
 class RecipeSearchFilter(rest_framework.FilterSet):
@@ -30,9 +30,9 @@ class RecipeSearchFilter(rest_framework.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = [
+        fields = (
             'is_favorited',
             'is_in_shopping_cart',
             'author',
             'tags'
-        ]
+        )

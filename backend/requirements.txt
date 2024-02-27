@@ -10,3 +10,4 @@ reportlab==4.0.8
 django-import-export==3.3.5
 flake8==6.0.0
 python-dotenv==0.21.0
+django-colorfield

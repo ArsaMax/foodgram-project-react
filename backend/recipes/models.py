@@ -1,9 +1,12 @@
+from colorfield.fields import ColorField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator
+
 from users.models import User
 
 MAX_LENGTH = 10
 MIN_VALUE = 1
+MAX_VALUE = 32000
 
 
 class RecipeQuerySet(models.QuerySet):
@@ -39,7 +42,10 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    color = models.CharField('Цвет', max_length=7)
+    color = ColorField(
+        'Цвет',
+        unique=True,
+    )
 
     class Meta:
         verbose_name = 'тег'
@@ -86,18 +92,17 @@ class Recipe(models.Model):
     name = models.CharField(
         'Рецепт',
         max_length=200,
-        unique=True,
     )
     image = models.ImageField(
         'Картинка рецепта',
         upload_to='recipes/images/',
     )
-    cooking_time = models.IntegerField(
-        validators=[
-            MinValueValidator(
-                limit_value=1,
-            )
-        ],
+    cooking_time = models.PositiveSmallIntegerField(
+        validators=(
+            MinValueValidator(limit_value=MIN_VALUE,),
+            MaxValueValidator(limit_value=MAX_VALUE,)
+
+        ),
         verbose_name='Время приготовления, мин.',
     )
     text = models.TextField(
@@ -140,10 +145,10 @@ class Favorite(models.Model):
 
     class Meta:
         verbose_name = 'Избранное'
-        constraints = [models.UniqueConstraint(
-            fields=['user', 'recipe'],
+        constraints = (models.UniqueConstraint(
+            fields=('user', 'recipe'),
             name='unique_favorites'
-        )]
+        ),)
 
 
 class RecipeIngredient(models.Model):
@@ -163,16 +168,19 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
-        validators=[MinValueValidator(MIN_VALUE)]
+        validators=(
+            MinValueValidator(MIN_VALUE),
+            MaxValueValidator(MAX_VALUE)
+            )
     )
 
     class Meta:
         verbose_name = 'ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
-        constraints = [models.UniqueConstraint(
-            fields=['recipe', 'ingredient'],
+        constraints = (models.UniqueConstraint(
+            fields=('recipe', 'ingredient'),
             name='unique_recipe_ingredient'
-        )]
+        ),)
 
     def __str__(self):
         return (f'В рецепте {self.recipe[:MAX_LENGTH]} '
@@ -220,10 +228,10 @@ class Cart(models.Model):
 
     class Meta:
         verbose_name = 'Корзина'
-        constraints = [models.UniqueConstraint(
-            fields=['user', 'recipe'],
+        constraints = (models.UniqueConstraint(
+            fields=('user', 'recipe'),
             name='unique_cart'
-        )]
+        ),)
 
     def __str__(self):
         return f'{self.user[:MAX_LENGTH]} - {self.recipe[:MAX_LENGTH]}'

@@ -2,6 +2,7 @@ import base64
 
 from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
+from django.db import transaction
 from rest_framework import serializers
 
 from users.models import User
@@ -45,8 +46,7 @@ class CustomUserSerializer(UserSerializer):
         """Проверка подписки."""
         user = self.context.get("request").user
         if user.is_anonymous or user == obj:
-            return False
-        return user.follower.filter(following_id=obj.id).exists()
+            return user.follower.filter(following_id=obj.id).exists()
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -163,9 +163,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
+        return obj.image.url if obj.image else None
 
     def validate_ingredients(self, value):
         """Валидация ингредиентов."""
@@ -210,6 +208,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance, context=self.context
         ).data
 
+    @transaction.atomic
     def create_and_update_objects(self, recipe, ingredients, tags):
         recipe.tags.set(tags)
         ingredients_list = []
@@ -223,6 +222,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create(ingredients_list)
         return recipe
 
+    @transaction.atomic
     def create(self, validated_data):
         """Создание рецепта."""
         ingredients = validated_data.pop('ingredients')
@@ -234,6 +234,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             tags=tags
         )
 
+    @transaction.atomic
     def update(self, recipe, validated_data):
         """Редактирование рецепта."""
         if (not validated_data.get('ingredients')
