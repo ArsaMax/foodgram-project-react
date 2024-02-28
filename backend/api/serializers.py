@@ -4,6 +4,7 @@ from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
 from django.db import transaction
 from rest_framework import serializers
+from drf_extra_fields.fields import Base64ImageField
 
 from users.models import User
 from recipes.models import (
@@ -11,19 +12,6 @@ from recipes.models import (
 )
 
 MIN_INGREDIENT_AMOUNT = 1
-
-
-class Base64ImageField(serializers.ImageField):
-    """Кастомный тип поля изображений."""
-
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            _format, img_str = data.split(';base64,')
-            ext = _format.split('/')[-1]
-            data = ContentFile(
-                base64.b64decode(img_str), name='temp.' + ext
-            )
-        return super().to_internal_value(data)
 
 
 class CustomUserSerializer(UserSerializer):
@@ -148,7 +136,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(
         read_only=True,
     )
-    image = serializers.SerializerMethodField('get_image_url')
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -161,9 +149,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
-
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
 
     def validate_ingredients(self, value):
         """Валидация ингредиентов."""
@@ -220,7 +205,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
             ingredients_list.append(new_ingredient)
         RecipeIngredient.objects.bulk_create(ingredients_list)
-        return recipe
 
     @transaction.atomic
     def create(self, validated_data):
@@ -228,11 +212,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-        return self.create_and_update_objects(
+        self.create_and_update_objects(
             recipe=recipe,
             ingredients=ingredients,
             tags=tags
         )
+        return recipe
 
     @transaction.atomic
     def update(self, recipe, validated_data):
@@ -246,11 +231,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = super().update(recipe, validated_data)
-        return self.create_and_update_objects(
+        self.create_and_update_objects(
             recipe=recipe,
             ingredients=ingredients,
             tags=tags
         )
+        return recipe
 
 
 class RecipesShortSerializer(serializers.ModelSerializer):

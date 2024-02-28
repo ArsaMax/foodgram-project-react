@@ -33,7 +33,7 @@ services:
       - 8000:80
     volumes:
       - static:/static/
-      - data:/app/media/
+      - data:/app/media/recipes/images/
     depends_on:
       - backend
       - frontend
