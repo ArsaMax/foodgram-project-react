@@ -82,6 +82,31 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(write_only=True)
     amount = serializers.IntegerField(write_only=True)
 
+    def validate_ingredients(self, value):
+        """Валидация ингредиентов."""
+        if not value:
+            raise serializers.ValidationError(
+                'Нужно добавить хотя бы один ингредиент.'
+            )
+        for ingredient in value:
+            if not int(ingredient.get('amount')) >= MIN_INGREDIENT_AMOUNT:
+                raise serializers.ValidationError(
+                    'Количество ингредиентов не должно быть меньше 1.'
+                )
+#            if not Ingredient.objects.filter(
+ #                   pk=ingredient.get('id')
+  #          ).exists():
+   #             raise serializers.ValidationError(
+    #                (f'Ингредиента с id - '
+     #                f'{ingredient.get("id")}, не существует.')
+      #          )
+        id_list = [ingredient.get('id') for ingredient in value]
+        if len(id_list) != len(set(id_list)):
+            raise serializers.ValidationError(
+                'Задвоение ингредиента.'
+            )
+        return value
+
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount')
@@ -150,31 +175,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def validate_ingredients(self, value):
-        """Валидация ингредиентов."""
-        if not value:
-            raise serializers.ValidationError(
-                'Нужно добавить хотя бы один ингредиент.'
-            )
-        for ingredient in value:
-            if not int(ingredient.get('amount')) >= MIN_INGREDIENT_AMOUNT:
-                raise serializers.ValidationError(
-                    'Количество ингредиентов не должно быть меньше 1.'
-                )
-            if not Ingredient.objects.filter(
-                    pk=ingredient.get('id')
-            ).exists():
-                raise serializers.ValidationError(
-                    (f'Ингредиента с id - '
-                     f'{ingredient.get("id")}, не существует.')
-                )
-        id_list = [ingredient.get('id') for ingredient in value]
-        if len(id_list) != len(set(id_list)):
-            raise serializers.ValidationError(
-                'Задвоение ингредиента.'
-            )
-        return value
-
     def validate_tags(self, value):
         """Валидация тегов."""
         if not value:
@@ -222,11 +222,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, recipe, validated_data):
         """Редактирование рецепта."""
-        if (not validated_data.get('ingredients')
-                or not validated_data.get('tags')):
-            raise serializers.ValidationError(
-                'Не все поля заполнены.'
-            )
+#        if (not validated_data.get('ingredients')
+ #               or not validated_data.get('tags')):
+  #          raise serializers.ValidationError(
+   #             'Не все поля заполнены.'
+    #        )
         recipe.ingredients.clear()
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
