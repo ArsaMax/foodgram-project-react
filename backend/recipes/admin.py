@@ -7,21 +7,6 @@ from .models import (
 )
 
 
-@admin.display(description='Описание')
-def trim_field_text(obj):
-    """Отображаемый текст не превышает 150 символов."""
-    mx_len = 150
-    if len(obj.text) > mx_len:
-        return f"{obj.text[:mx_len]}..."
-    return obj.text
-
-
-@admin.display(description='Избранное')
-def favorite_count(obj):
-    """Количество добавлений в избранное."""
-    return obj.favorite_recipe.count()
-
-
 class IngredientInline(admin.TabularInline):
     model = RecipeIngredient
     extra = 1
@@ -30,13 +15,17 @@ class IngredientInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'name', 'cooking_time',
-        trim_field_text, 'author', favorite_count
+        'id', 'name', 'cooking_time', 'author'
     )
     list_editable = ('name', 'cooking_time')
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'cooking_time')
     inlines = [IngredientInline]
+
+    def favorites(self, obj):
+        if Favorite.objects.filter(recipe=obj).exists():
+            return Favorite.objects.filter(recipe=obj).count()
+        return 0
 
 
 @admin.register(Tag)
