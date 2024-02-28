@@ -1,7 +1,4 @@
-import base64
-
 from djoser.serializers import UserSerializer
-from django.core.files.base import ContentFile
 from django.db import transaction
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
@@ -93,13 +90,6 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Количество ингредиентов не должно быть меньше 1.'
                 )
-#            if not Ingredient.objects.filter(
- #                   pk=ingredient.get('id')
-  #          ).exists():
-   #             raise serializers.ValidationError(
-    #                (f'Ингредиента с id - '
-     #                f'{ingredient.get("id")}, не существует.')
-      #          )
         id_list = [ingredient.get('id') for ingredient in value]
         if len(id_list) != len(set(id_list)):
             raise serializers.ValidationError(
@@ -222,11 +212,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, recipe, validated_data):
         """Редактирование рецепта."""
-#        if (not validated_data.get('ingredients')
- #               or not validated_data.get('tags')):
-  #          raise serializers.ValidationError(
-   #             'Не все поля заполнены.'
-    #        )
         recipe.ingredients.clear()
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
