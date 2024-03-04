@@ -1,10 +1,13 @@
+import io
 from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
 from rest_framework import status, viewsets
+from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from djoser.views import UserViewSet
+from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from reportlab.pdfgen import canvas
@@ -278,7 +281,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=('get',),
-        pagination_class=IsAuthenticated
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         """Скачивание списка покупок в PDF."""

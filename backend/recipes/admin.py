@@ -9,6 +9,8 @@ from .models import (
 
 class IngredientInline(admin.TabularInline):
     model = RecipeIngredient
+    autocomplete_fields = ('ingredient',)
+    min_num = 1
     extra = 1
 
 
@@ -20,12 +22,13 @@ class RecipAdmin(admin.ModelAdmin):
     list_editable = ('name', 'cooking_time')
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'cooking_time')
+    min_num = 1
     inlines = [IngredientInline]
 
-    def favorites(self, obj):
-        if Favorite.objects.filter(recipe=obj).exists():
-            return Favorite.objects.filter(recipe=obj).count()
-        return 0
+#    def favorites(self, obj):
+#        if Favorite.objects.filter(recipe=obj).exists():
+#            return Favorite.objects.filter(recipe=obj).count()
+#        return 0
 
 
 @admin.register(Tag)

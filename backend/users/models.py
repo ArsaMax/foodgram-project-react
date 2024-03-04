@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 MAX_LENGTH = 15
 
@@ -25,7 +26,7 @@ class User(AbstractUser):
         'Фамилия',
         max_length=150,
     )
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
+    REQUIRED_FIELDS = ('first_name', 'last_name', 'username')
     USERNAME_FIELD = 'email'
 
     class Meta:
@@ -53,15 +54,16 @@ class Follow(models.Model):
         related_name='following',
     )
 
+    def save(self, **kwargs):
+        if self.user == self.following:
+            raise ValidationError('Подписка на себя запрещена.')
+        super().save()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique_following'
-            ),
-            models.CheckConstraint(
-                check=~models.Q(user=models.F('following')),
-                name='cannt follow themselves'
             )
         ]
         verbose_name = 'подписка'

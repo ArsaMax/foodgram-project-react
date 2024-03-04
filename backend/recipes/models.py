@@ -59,7 +59,8 @@ class Ingredient(models.Model):
     """Модель ингредиента."""
 
     name = models.CharField(
-        'Ингредиент',
+        'Наименование ингредиента',
+        unique=True,
         max_length=200,
     )
     measurement_unit = models.CharField(
@@ -145,6 +146,7 @@ class Favorite(models.Model):
 
     class Meta:
         verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
         constraints = (models.UniqueConstraint(
             fields=('user', 'recipe'),
             name='unique_favorites'
@@ -228,6 +230,7 @@ class Cart(models.Model):
 
     class Meta:
         verbose_name = 'Корзина'
+        verbose_name_plural = 'Корзина'
         constraints = (models.UniqueConstraint(
             fields=('user', 'recipe'),
             name='unique_cart'
