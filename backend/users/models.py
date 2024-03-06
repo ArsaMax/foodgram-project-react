@@ -38,6 +38,10 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ('first_name', 'last_name', 'username')
     USERNAME_FIELD = 'email'
 
+    def clean_password(self):
+        if len(self.password) > 150:
+            raise ValidationError('Пароль слишком длинный.')
+
     class Meta:
         ordering = ('id',)
         verbose_name = 'пользователь'

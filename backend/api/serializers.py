@@ -35,6 +35,12 @@ class CustomUserSerializer(UserSerializer):
         """Проверка подписки."""
         return obj.id in self.context.get('is_subscribed', [])
 
+    def validate_password(self, value):
+        """Валидация пароля."""
+        if len(value) > 150:
+            raise ValidationError('Слишком длинный пароль.')
+        return value
+
 
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для тегов."""
