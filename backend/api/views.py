@@ -1,15 +1,13 @@
-import io
 from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from djoser.views import UserViewSet
-from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -26,13 +24,22 @@ from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     TagSerializer, IngredientSerializer,
     RecipeSerializer, RecipesShortSerializer,
-    SubscriptionsSerializer
+    SubscriptionsSerializer, RecipeGetSerializer,
+    CustomUserSerializer
 )
 from .pagination import CustomPagination
 
 
 class CustomUserViewSet(UserViewSet):
+    serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
+    queryset = User.objects.all()
+    http_method_names = ('get', 'post', 'delete')
+
+    def get_permissions(self):
+        if self.action in ('me', 'subscriptions', 'subscribe'):
+            return (IsAuthenticated(),)
+        return (AllowAny(),)
 
     @action(
         ('get',),
@@ -152,21 +159,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     скачивания списка покупок.
     """
 
-    queryset = Recipe.objects.all().select_related(
-        'author'
-    ).prefetch_related(
-        'tags',
-        Prefetch(
-            'recipe_ingredient',
-            queryset=RecipeIngredient.objects.select_related(
-                'ingredient'
-            ),
-            to_attr='ingredients'
-        )
+    queryset = (
+        Recipe.objects
+        .select_related('author')
+        .prefetch_related(Prefetch('ingredients'))
+        .all()
     )
     pagination_class = CustomPagination
-    permission_classes = (IsAuthorOrReadOnly,)
-    serializer_class = RecipeSerializer
+    permission_classes = (IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeSearchFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
@@ -178,6 +178,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 self.request.user
             )
         return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RecipeGetSerializer
+        return RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(

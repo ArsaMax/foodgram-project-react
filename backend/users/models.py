@@ -1,8 +1,12 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 
-MAX_LENGTH = 15
+
+ALLOWED_SYMBOLS = RegexValidator(
+    r'^[\w.@+-]+\Z', 'Запрещенные символы в логине.'
+)
 
 
 class User(AbstractUser):
@@ -12,6 +16,7 @@ class User(AbstractUser):
         'Логин',
         unique=True,
         max_length=150,
+        validators=(ALLOWED_SYMBOLS,),
     )
     email = models.EmailField(
         'E-mail',
@@ -26,6 +31,10 @@ class User(AbstractUser):
         'Фамилия',
         max_length=150,
     )
+    password = models.CharField(
+        'Пароль',
+        max_length=150
+    )
     REQUIRED_FIELDS = ('first_name', 'last_name', 'username')
     USERNAME_FIELD = 'email'
 
@@ -35,7 +44,7 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
-        return self.username[:MAX_LENGTH]
+        return self.username
 
 
 class Follow(models.Model):
@@ -54,20 +63,16 @@ class Follow(models.Model):
         related_name='following',
     )
 
-    def save(self, **kwargs):
+    def clean(self):
         if self.user == self.following:
             raise ValidationError('Подписка на себя запрещена.')
-        super().save()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique_following'
-            )
+            ),
         ]
         verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
-
-    def __str__(self):
-        return f'{self.user[:MAX_LENGTH]} --> {self.following[:MAX_LENGTH]}'

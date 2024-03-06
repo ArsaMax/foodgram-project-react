@@ -24,16 +24,14 @@ class CustomUserSerializer(UserSerializer):
             'username',
             'first_name',
             'last_name',
+            'password',
             'is_subscribed'
         )
+        extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
-        user = self.context.get("request").user
-        return (
-            user.follower.filter(following_id=obj.id).exists()
-            if user.is_anonymous or user == obj else False
-        )
+        return obj.id in self.context.get('is_subscribed', [])
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -136,6 +134,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
@@ -148,6 +147,43 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
+
+    def validate_tags(self, value):
+        """Валидация тегов."""
+        if not value:
+            raise serializers.ValidationError(
+                'Нужно добавить больше тегов.'
+            )
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError(
+                'Задвоение тега.'
+            )
+        return value
+
+    def validate(self, data):
+        """
+        Проверяет наименование рецепта.
+        """
+        author = self.context['request'].user
+        name = data.get('name')
+        text = data.get('text')
+        if self.instance is None and Recipe.objects.filter(
+            author=author,
+            name=name,
+        ).exists():
+            if self.instance is None and Recipe.objects.filter(
+                text=text,
+            ).exists():
+                raise serializers.ValidationError(
+                    {'error': 'Этот рецепт уже был добавлен.'}
+                )
+        return data
+
+    def to_representation(self, instance):
+        """Переопределение сериализатора для вывода данных."""
+        return RecipeGetSerializer(
+            instance, context=self.context
+        ).data
 
 #    def validate_ingredients(self, value):
 #        """Валидация ингредиентов."""
@@ -192,39 +228,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 #                raise serializers.ValidationError(
 #                    'Количество ингредиента больше 32000')
 #        return ingredients
-
-    def validate_tags(self, value):
-        """Валидация тегов."""
-        if not value:
-            raise serializers.ValidationError(
-                'Нужно добавить больше тегов.'
-            )
-        if len(value) != len(set(value)):
-            raise serializers.ValidationError(
-                'Задвоение тега.'
-            )
-        return value
-
-#    def validate(self, data):
-#        """
-#        Проверяет валидность данных при создании рецепта.
-#        """
-#        author = self.context['request'].user
-#        name = data.get('name')
-#        if self.instance is None and Recipe.objects.filter(
-#            author=author,
-#            name=name,
-#        ).exists():
-#            raise serializers.ValidationError(
-#                {'error': 'Этот рецепт уже был добавлен.'}
-#            )
-#        return data
-
-    def to_representation(self, instance):
-        """Переопределение сериализатора для вывода данных."""
-        return RecipeGetSerializer(
-            instance, context=self.context
-        ).data
 
     @transaction.atomic
     def create_and_update_objects(self, recipe, ingredients, tags):
@@ -284,7 +287,7 @@ class SubscriptionsSerializer(CustomUserSerializer):
     """Сериализатор для подписок."""
 
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User

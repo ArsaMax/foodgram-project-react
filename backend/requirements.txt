@@ -11,3 +11,4 @@ django-import-export==3.3.5
 flake8==6.0.0
 python-dotenv==0.21.0
 django-colorfield
+drf_spectacular

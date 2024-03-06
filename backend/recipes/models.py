@@ -52,7 +52,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return self.name[:MAX_LENGTH]
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -71,9 +71,10 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        ordering = ('name',)
 
     def __str__(self):
-        return self.name[:MAX_LENGTH]
+        return self.name
 
 
 class Recipe(models.Model):
@@ -125,7 +126,7 @@ class Recipe(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return self.name[:MAX_LENGTH]
+        return self.name
 
 
 class Favorite(models.Model):
@@ -184,32 +185,28 @@ class RecipeIngredient(models.Model):
             name='unique_recipe_ingredient'
         ),)
 
-    def __str__(self):
-        return (f'В рецепте {self.recipe[:MAX_LENGTH]} '
-                f'ингредиенты: {self.ingredient[:MAX_LENGTH]}.')
 
-
-class RecipeTag(models.Model):
-    """Промежуточная модель рецепт-тег."""
-
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт'
-    )
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        verbose_name='Тег'
-    )
-
-    class Meta:
-        verbose_name = 'тег рецепта'
-        verbose_name_plural = 'Теги рецепта'
-
-    def __str__(self):
-        return (f'Тег {self.tag[:MAX_LENGTH]} '
-                f'у рецепта {self.recipe[:MAX_LENGTH]}')
+#class RecipeTag(models.Model):
+#    """Промежуточная модель рецепт-тег."""
+#
+#    recipe = models.ForeignKey(
+#        Recipe,
+#        on_delete=models.CASCADE,
+#        verbose_name='Рецепт'
+#    )
+#    tag = models.ForeignKey(
+#        Tag,
+#        on_delete=models.CASCADE,
+#        verbose_name='Тег'
+#    )
+#
+#    class Meta:
+#        verbose_name = 'тег рецепта'
+#        verbose_name_plural = 'Теги рецепта'
+#
+#    def __str__(self):
+#        return (f'Тег {self.tag[:MAX_LENGTH]} '
+#                f'у рецепта {self.recipe[:MAX_LENGTH]}')
 
 
 class Cart(models.Model):
@@ -235,6 +232,3 @@ class Cart(models.Model):
             fields=('user', 'recipe'),
             name='unique_cart'
         ),)
-
-    def __str__(self):
-        return f'{self.user[:MAX_LENGTH]} - {self.recipe[:MAX_LENGTH]}'

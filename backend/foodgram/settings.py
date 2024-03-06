@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'colorfield',
     'djoser',
     'django_filters',
+    'drf_spectacular',
     'import_export',
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
@@ -112,8 +113,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -132,10 +135,10 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'PERMISSIONS': {
         'user_list': [
-            'rest_framework.permissions.AllowAny'
+            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
         ],
         'user': [
-            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
+            'djoser.permissions.CurrentUserOrAdminOrReadOnly'
         ]
-    },
+    }
 }
