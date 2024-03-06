@@ -1,7 +1,9 @@
 from djoser.serializers import UserSerializer
 from django.db import transaction
-from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 
 from users.models import User
 from recipes.models import (
@@ -151,11 +153,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate_tags(self, value):
         """Валидация тегов."""
         if not value:
-            raise serializers.ValidationError(
+            raise ValidationError(
                 'Нужно добавить больше тегов.'
             )
         if len(value) != len(set(value)):
-            raise serializers.ValidationError(
+            raise ValidationError(
                 'Задвоение тега.'
             )
         return value
@@ -174,7 +176,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             if self.instance is None and Recipe.objects.filter(
                 text=text,
             ).exists():
-                raise serializers.ValidationError(
+                raise ValidationError(
                     {'error': 'Этот рецепт уже был добавлен.'}
                 )
         return data
@@ -185,49 +187,24 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance, context=self.context
         ).data
 
-#    def validate_ingredients(self, value):
-#        """Валидация ингредиентов."""
-#        if not value:
-#            raise serializers.ValidationError(
-#                'Нужно добавить хотя бы один ингредиент.'
-#            )
-#        for ingredient in value:
-#            if not int(ingredient.get('amount')) >= MIN_INGREDIENT_AMOUNT:
-#                raise serializers.ValidationError(
-#                    'Количество ингредиентов не должно быть меньше 1.'
-#                )
-#        id_list = [ingredient.get('id') for ingredient in value]
-#        if len(id_list) != len(set(id_list)):
-#            raise serializers.ValidationError(
-#                'Задвоение ингредиента.'
-#            )
-#        return value
-
-#    def validate(self, data):
-#        if not data['ingredients']:
-#            raise serializers.ValidationError(
-#                'Нужно добавить ингредиенты.'
-#            )
-#        return data
-
-#    def validate_ingredients(self, ingredients):
-#        ingredients_list = []
-#        if not ingredients:
-#            raise serializers.ValidationError(
-#                'Нужно добавить ингредиенты.'
-#            )
-#        for ingredient in ingredients:
-#            if ingredient['id'] in ingredients_list:
- #               raise serializers.ValidationError(
-  #                  'Ингридиенты должны быть уникальны')
-#            ingredients_list.append(ingredient['id'])
-#            if int(ingredient.get('amount')) < 1:
-#                raise serializers.ValidationError(
-#                    'Количество ингредиента больше 0')
-#            if int(ingredient.get('amount')) > 32000:
-#                raise serializers.ValidationError(
-#                    'Количество ингредиента больше 32000')
-#        return ingredients
+    def validate_ingredients(self, ingredients):
+        ingredients_list = []
+        if not ingredients:
+            raise ValidationError(
+                'Нужно добавить ингредиенты.'
+            )
+        for ingredient in ingredients:
+            if ingredient['id'] in ingredients_list:
+                raise ValidationError(
+                    'Ингридиенты должны быть уникальны')
+            ingredients_list.append(ingredient['id'])
+            if int(ingredient.get('amount')) < 1:
+                raise ValidationError(
+                    'Количество ингредиента больше 0')
+            if int(ingredient.get('amount')) > 32000:
+                raise ValidationError(
+                    'Количество ингредиента больше 32000')
+        return ingredients
 
     @transaction.atomic
     def create_and_update_objects(self, recipe, ingredients, tags):

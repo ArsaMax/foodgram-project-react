@@ -16,7 +16,7 @@ from users.models import Follow, User
 from recipes.models import (
     Tag, Ingredient,
     Recipe, Cart,
-    Favorite, RecipeIngredient
+    Favorite
 )
 
 from .filters import IngredientSearchFilter, RecipeSearchFilter
@@ -37,14 +37,14 @@ class CustomUserViewSet(UserViewSet):
     http_method_names = ('get', 'post', 'delete')
 
     def get_permissions(self):
-        if self.action in ('me', 'subscriptions', 'subscribe'):
+        if self.action in ('subscriptions', 'subscribe'):
             return (IsAuthenticated(),)
         return (AllowAny(),)
 
     @action(
         ('get',),
         detail=False,
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticatedOrReadOnly,)
     )
     def me(self, request):
         """Вывод информации о текущем пользователе."""

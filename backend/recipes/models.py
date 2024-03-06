@@ -186,29 +186,6 @@ class RecipeIngredient(models.Model):
         ),)
 
 
-#class RecipeTag(models.Model):
-#    """Промежуточная модель рецепт-тег."""
-#
-#    recipe = models.ForeignKey(
-#        Recipe,
-#        on_delete=models.CASCADE,
-#        verbose_name='Рецепт'
-#    )
-#    tag = models.ForeignKey(
-#        Tag,
-#        on_delete=models.CASCADE,
-#        verbose_name='Тег'
-#    )
-#
-#    class Meta:
-#        verbose_name = 'тег рецепта'
-#        verbose_name_plural = 'Теги рецепта'
-#
-#    def __str__(self):
-#        return (f'Тег {self.tag[:MAX_LENGTH]} '
-#                f'у рецепта {self.recipe[:MAX_LENGTH]}')
-
-
 class Cart(models.Model):
     """Модель для корзины."""
 
