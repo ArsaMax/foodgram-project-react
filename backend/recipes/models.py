@@ -1,5 +1,5 @@
-from colorfield.fields import ColorField
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (MaxValueValidator, MinValueValidator,
+                                    RegexValidator)
 from django.db import models
 
 from users.models import User
@@ -42,9 +42,16 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    color = ColorField(
+    color = models.CharField(
         'Цвет',
+        help_text=('Введите код цвета в формате hex (#ABCDEF)'),
+        max_length=7,
         unique=True,
+        validators=(
+            RegexValidator(
+                regex='^#[a-fA-F0-9]{6}$', code='wrong_hex_code',
+                message='Неверный формат цвета.'),
+        )
     )
 
     class Meta:
@@ -62,10 +69,14 @@ class Ingredient(models.Model):
         'Наименование ингредиента',
         unique=True,
         max_length=200,
+        blank=False,
+        null=False,
     )
     measurement_unit = models.CharField(
         'Единица измерения',
         max_length=200,
+        blank=False,
+        null=False,
     )
 
     class Meta:
@@ -82,6 +93,7 @@ class Recipe(models.Model):
 
     ingredients = models.ManyToManyField(
         Ingredient,
+        blank=False,
         through='RecipeIngredient',
         related_name='recipe',
         verbose_name='Ингредиенты',
@@ -101,9 +113,14 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         validators=(
-            MinValueValidator(limit_value=MIN_VALUE,),
-            MaxValueValidator(limit_value=MAX_VALUE,)
-
+            MinValueValidator(
+                MIN_VALUE,
+                message='Время меньше 1 недопустимо.'
+            ),
+            MaxValueValidator(
+                MAX_VALUE,
+                message='Время больше 32000 недопустимо.'
+            )
         ),
         verbose_name='Время приготовления, мин.',
     )
@@ -172,8 +189,8 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=(
-            MinValueValidator(MIN_VALUE),
-            MaxValueValidator(MAX_VALUE)
+            MinValueValidator(MIN_VALUE, message='Не меньше 1'),
+            MaxValueValidator(MAX_VALUE, message='Не больше 32000')
         )
     )
 

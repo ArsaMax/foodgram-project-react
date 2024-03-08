@@ -1,5 +1,6 @@
 from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
+from django.db.models import Count
 from rest_framework import status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -36,15 +37,9 @@ class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
     http_method_names = ('get', 'post', 'delete')
 
-    def get_permissions(self):
-        if self.action in ('subscriptions', 'subscribe'):
-            return (IsAuthenticated(),)
-        return (AllowAny(),)
-
     @action(
-        ('get',),
         detail=False,
-        permission_classes=(IsAuthenticatedOrReadOnly,)
+        permission_classes=(IsAuthenticated,),
     )
     def me(self, request):
         """Вывод информации о текущем пользователе."""
@@ -64,7 +59,7 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         following = User.objects.filter(
             following__user=user
-        )
+        ).annotate(recipes_count=Count('recipes'))
         paginate = self.paginate_queryset(following)
         serializer = SubscriptionsSerializer(
             data=paginate,
@@ -78,7 +73,8 @@ class CustomUserViewSet(UserViewSet):
 
     @action(
         methods=('post',),
-        detail=True
+        detail=True,
+        permission_classes=(IsAuthenticated,)
     )
     def subscribe(self, request, **kwargs):
         """Создание подписки."""

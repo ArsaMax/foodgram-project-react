@@ -1,16 +1,19 @@
 from djoser.serializers import UserSerializer
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
-
-from users.models import User
+from users.models import User, Follow
 from recipes.models import (
     Tag, Ingredient, Recipe, RecipeIngredient
 )
 
 MIN_INGREDIENT_AMOUNT = 1
+MIN_VALUE = 1
+MAX_VALUE = 32000
 
 
 class CustomUserSerializer(UserSerializer):
@@ -26,20 +29,18 @@ class CustomUserSerializer(UserSerializer):
             'username',
             'first_name',
             'last_name',
-            'password',
             'is_subscribed'
         )
-        extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
-        return obj.id in self.context.get('is_subscribed', [])
-
-    def validate_password(self, value):
-        """Валидация пароля."""
-        if len(value) > 150:
-            raise ValidationError('Слишком длинный пароль.')
-        return value
+        user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
+        return Follow.objects.filter(
+            user=user,
+            following=obj.id
+        ).exists()
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -85,7 +86,19 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     """Сериализатор: ингредиенты в рецепте."""
 
     id = serializers.IntegerField(write_only=True)
-    amount = serializers.IntegerField(write_only=True)
+    amount = serializers.IntegerField(
+        write_only=True,
+        validators=(
+            MinValueValidator(
+                MIN_VALUE,
+                message='Количество ингредиента должно быть больше 0'
+            ),
+            MaxValueValidator(
+                MAX_VALUE,
+                message='Количество ингредиента должно быть меньше 32000'
+            ),
+        )
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -142,7 +155,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     image = Base64ImageField()
-    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
@@ -170,7 +182,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        Проверяет наименование рецепта.
+        Проверяет уникальность рецепта.
         """
         author = self.context['request'].user
         name = data.get('name')
@@ -182,9 +194,15 @@ class RecipeSerializer(serializers.ModelSerializer):
             if self.instance is None and Recipe.objects.filter(
                 text=text,
             ).exists():
-                raise ValidationError(
-                    {'error': 'Этот рецепт уже был добавлен.'}
-                )
+                raise ValidationError('Этот рецепт уже был добавлен.')
+        ingredients = self.initial_data.get('ingredients')
+        if not ingredients:
+            raise ValidationError('Нужно выбрать ингредиент')
+        ingredients_list = [ingredient['id'] for ingredient in ingredients]
+        if len(ingredients_list) != len(set(ingredients_list)):
+            raise ValidationError(
+                'Ошибка: нельзя выбирать один и тот же ингредиент!'
+            )
         return data
 
     def to_representation(self, instance):
@@ -193,37 +211,16 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance, context=self.context
         ).data
 
-    def validate_ingredients(self, ingredients):
-        ingredients_list = []
-        if not ingredients:
-            raise ValidationError(
-                'Нужно добавить ингредиенты.'
-            )
-        for ingredient in ingredients:
-            if ingredient['id'] in ingredients_list:
-                raise ValidationError(
-                    'Ингридиенты должны быть уникальны')
-            ingredients_list.append(ingredient['id'])
-            if int(ingredient.get('amount')) < 1:
-                raise ValidationError(
-                    'Количество ингредиента больше 0')
-            if int(ingredient.get('amount')) > 32000:
-                raise ValidationError(
-                    'Количество ингредиента больше 32000')
-        return ingredients
-
     @transaction.atomic
     def create_and_update_objects(self, recipe, ingredients, tags):
         recipe.tags.set(tags)
-        ingredients_list = []
-        for ingredient in ingredients:
-            new_ingredient = RecipeIngredient(
+        RecipeIngredient.objects.bulk_create(
+            [RecipeIngredient(
                 recipe=recipe,
-                ingredient_id=ingredient['id'],
-                amount=ingredient['amount'],
-            )
-            ingredients_list.append(new_ingredient)
-        RecipeIngredient.objects.bulk_create(ingredients_list)
+                ingredient=Ingredient.objects.get(pk=ingredient['id']),
+                amount=ingredient['amount']
+            ) for ingredient in ingredients]
+        )
 
     @transaction.atomic
     def create(self, validated_data):
@@ -255,6 +252,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class RecipesShortSerializer(serializers.ModelSerializer):
     """Сериализатор рецептов в подписках и корзине."""
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
