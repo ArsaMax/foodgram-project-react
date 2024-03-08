@@ -32,6 +32,7 @@ class RecipAdmin(admin.ModelAdmin):
             return Favorite.objects.filter(recipe=obj).count()
         return 0
 
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'color')
