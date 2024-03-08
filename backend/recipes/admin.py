@@ -32,11 +32,6 @@ class RecipAdmin(admin.ModelAdmin):
             return Favorite.objects.filter(recipe=obj).count()
         return 0
 
-#    def save_form(self, form):
-#        if form['ingredient'] < 1:
-#            raise ValueError
-#        return form.save(commit=False)
-
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'color')
