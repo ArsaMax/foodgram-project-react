@@ -14,6 +14,10 @@ class IngredientInline(admin.TabularInline):
     extra = 0
     validate_min = True
 
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj=None, **kwargs)
+        formset.validate_min = True
+        return formset
 
 @admin.register(Recipe)
 class RecipAdmin(admin.ModelAdmin):
