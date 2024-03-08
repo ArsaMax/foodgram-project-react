@@ -19,6 +19,7 @@ class IngredientInline(admin.TabularInline):
         formset.validate_min = True
         return formset
 
+
 @admin.register(Recipe)
 class RecipAdmin(admin.ModelAdmin):
     list_display = (
