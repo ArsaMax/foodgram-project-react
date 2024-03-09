@@ -1,6 +1,10 @@
 # Foodgram
 Адрес проекта: https://arsakitty.ru/
 
+Адреса документации:
+https://arsakitty.ru/api/schema/swagger-ui/ и 
+https://arsakitty.ru/api/schema/redoc/
+
 ## Описание
 Проект Foodgram - сайт, на котором пользователи будут публиковать рецепты,
 добавлять чужие рецепты в избранное и подписываться на публикации других

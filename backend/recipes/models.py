@@ -49,7 +49,7 @@ class Tag(models.Model):
         unique=True,
         validators=(
             RegexValidator(
-                regex='^#[a-fA-F0-9]{6}$', code='wrong_hex_code',
+                regex='^#[A-F0-9]{6}$', code='wrong_hex_code',
                 message='Неверный формат цвета.'),
         )
     )

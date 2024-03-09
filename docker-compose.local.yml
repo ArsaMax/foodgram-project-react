@@ -19,6 +19,7 @@ services:
       - static:/static/
     depends_on:
       - db
+    restart: on-failure
   frontend:
     env_file: .env
     build: ./frontend/
@@ -33,3 +34,7 @@ services:
     volumes:
       - static:/static/
       - data:/app/media/
+    depends_on:
+      - backend
+      - frontend
+    restart: always

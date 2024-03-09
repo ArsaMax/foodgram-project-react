@@ -30,7 +30,6 @@ class RecipAdmin(admin.ModelAdmin):
     search_fields = ('name', 'cooking_time')
     min_num = 1
     inlines = [IngredientInline]
-    validate_min = True
 
     def favorites(self, obj):
         if Favorite.objects.filter(recipe=obj).exists():
