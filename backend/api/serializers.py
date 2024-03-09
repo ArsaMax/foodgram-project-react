@@ -34,12 +34,10 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
         user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
         return Follow.objects.filter(
             user=user,
             following=obj.id
-        ).exists()
+        ).exists() if not user.is_anonymous else False
 
 
 class TagSerializer(serializers.ModelSerializer):
