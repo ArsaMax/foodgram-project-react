@@ -137,11 +137,10 @@ DJOSER = {
     'HIDE_USERS': False,
     'SEND_ACTIVATION_EMAIL': False,
     'PERMISSIONS': {
-        'user_list': [
-            'rest_framework.permissions.IsAuthenticatedOrReadOnly'
-        ],
-        'user': [
-            'djoser.permissions.CurrentUserOrAdminOrReadOnly'
-        ]
+        'user': ['rest_framework.permissions.AllowAny'],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+#        'user': [
+#            'djoser.permissions.CurrentUserOrAdminOrReadOnly'
+#        ]
     }
 }
